@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	slog.SetDefault(logger)
+
 	cfg := config{
 		port: ":8080",
 		db:   dbConfig{},
@@ -16,6 +19,7 @@ func main() {
 
 	api := api{
 		config: cfg,
+		logger: logger,
 	}
 
 	ctx, stop := signal.NotifyContext(
@@ -26,6 +30,7 @@ func main() {
 	defer stop()
 
 	if err := api.run(ctx, api.mount()); err != nil {
-		log.Fatalln("Server error: ", err)
+		slog.Error("Server error: ", "error", err)
+		os.Exit(1)
 	}
 }

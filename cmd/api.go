@@ -3,10 +3,12 @@ package main
 import (
 	"net/http"
 	"time"
-	"log"
+	"log/slog"
 	"context"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v3"
 )
 
 func (api *api) mount() http.Handler { // mount returns an http.Handler, keeping the server framework-agnostic.
@@ -16,7 +18,7 @@ func (api *api) mount() http.Handler { // mount returns an http.Handler, keeping
 
   	r.Use(middleware.RequestID)
   	r.Use(middleware.RealIP)
-  	r.Use(middleware.Logger)
+  	r.Use(httplog.RequestLogger(api.logger, &httplog.Options{Level: slog.LevelInfo}))
   	r.Use(middleware.Recoverer)
 
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -41,7 +43,7 @@ func (api *api) run(ctx context.Context, h http.Handler) error {
 	serverErrors := make(chan error, 1)
 
 	go func() {
-		log.Println("Starting server on port", api.config.port)
+		slog.Info("Starting server on port", "port", api.config.port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
@@ -49,7 +51,7 @@ func (api *api) run(ctx context.Context, h http.Handler) error {
 
 	select {
 	case <-ctx.Done(): // Blocks the main goroutine until the application context gets cancelled.
-		log.Println("Shutdown signal received!")
+		slog.Info("Shutdown signal received!")
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second) // Create a context to attempt a graceful 30 second shutdown.
 		defer cancel() // Releases context resources once the srv.Shutdown() call is complete.
@@ -64,6 +66,7 @@ func (api *api) run(ctx context.Context, h http.Handler) error {
 
 type api struct {
 	config config
+	logger *slog.Logger
 }
 
 type config struct {
