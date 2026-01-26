@@ -1,18 +1,31 @@
 package main
 
-import "log"
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
 
 func main() {
 	cfg := config{
 		port: ":8080",
-		db: dbConfig{},
+		db:   dbConfig{},
 	}
 
 	api := api{
 		config: cfg,
 	}
 
-	if err := api.run(api.mount()); err != nil {
-		log.Fatalln("Server failed to start: ", err)
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	if err := api.run(ctx, api.mount()); err != nil {
+		log.Fatalln("Server error: ", err)
 	}
 }
