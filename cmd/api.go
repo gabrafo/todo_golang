@@ -1,10 +1,11 @@
 package main
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
 	"time"
-	"log/slog"
-	"context"
+	"todo_golang/internal/tasks"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,6 +26,12 @@ func (api *api) mount() http.Handler { // mount returns an http.Handler, keeping
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 	    w.Write([]byte("OK"))
+	})
+
+	tasksService := tasks.NewService()
+	tasksHandler := tasks.NewHandler(tasksService)
+	r.Route("/tasks", func(r chi.Router) {
+		r.Get("/", tasksHandler.ListTasks)
 	})
 
 	return r

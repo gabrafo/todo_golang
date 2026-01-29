@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: todo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  sqlc:
+    image: sqlc/sqlc:latest
+    working_dir: /src
+    volumes:
+      - ./:/src
+    command: ["generate"]
+    depends_on:
+      - db
+
+  goose:
+    image: kukymbr/goose-docker:latest
+    environment:
+      DATABASE_URL: ${DB_URL}
+    volumes:
+      - ./internal/adapters/migrations:/migrations
+    # default command shows migration status; run `docker compose run --rm goose up` to apply
+    command: ["status"]
+    depends_on:
+      - db
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: ${DB_URL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  db-data: {}
