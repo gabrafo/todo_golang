@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	"todo_golang/internal/tasks"
+	
+	"github.com/gabrafo/todo_golang/internal/tasks"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

@@ -21,21 +21,22 @@ services:
 
   goose:
     image: kukymbr/goose-docker:latest
-    environment:
-      DATABASE_URL: ${DB_URL}
-    volumes:
-      - ./internal/adapters/migrations:/migrations
-    # default command shows migration status; run `docker compose run --rm goose up` to apply
-    command: ["status"]
     depends_on:
       - db
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: ${DB_URL}
+    volumes:
+      - ./internal/adapters/migrations:/migrations
+    command: up
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: ${DB_URL}
+      DB_URL: ${DB_URL}
+      APP_PORT: ${APP_PORT}
     ports:
       - "8080:8080"
     depends_on:

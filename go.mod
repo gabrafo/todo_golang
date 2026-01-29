@@ -1,4 +1,4 @@
-module todo_golang
+module github.com/gabrafo/todo_golang
 
 go 1.25.0
 

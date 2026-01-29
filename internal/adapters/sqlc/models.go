@@ -2,11 +2,57 @@
 // versions:
 //   sqlc v1.30.0
 
-package repo
+package sqlc
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type TaskStatus string
+
+const (
+	TaskStatusTodo  TaskStatus = "todo"
+	TaskStatusDoing TaskStatus = "doing"
+	TaskStatusDone  TaskStatus = "done"
+)
+
+func (e *TaskStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskStatus(s)
+	case string:
+		*e = TaskStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTaskStatus struct {
+	TaskStatus TaskStatus `json:"task_status"`
+	Valid      bool       `json:"valid"` // Valid is true if TaskStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskStatus), nil
+}
 
 type Category struct {
 	ID        pgtype.UUID        `json:"id"`
@@ -18,7 +64,7 @@ type Task struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
 	Name      string             `json:"name"`
-	Status    interface{}        `json:"status"`
+	Status    TaskStatus         `json:"status"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }

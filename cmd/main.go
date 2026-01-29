@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gabrafo/todo_golang/internal/env"
 )
 
 func main() {
@@ -13,8 +15,10 @@ func main() {
 	slog.SetDefault(logger)
 
 	cfg := config{
-		port: ":8080",
-		db:   dbConfig{},
+		port: env.MustEnv("APP_PORT"),
+		db: dbConfig{
+			dsn: env.MustEnv("DB_URL"),
+		},
 	}
 
 	api := api{
