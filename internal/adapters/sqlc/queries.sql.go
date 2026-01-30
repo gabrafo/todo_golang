@@ -11,6 +11,86 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addTaskCategory = `-- name: AddTaskCategory :exec
+INSERT INTO task_categories (task_id, category_id)
+VALUES ($1, $2)
+`
+
+type AddTaskCategoryParams struct {
+	TaskID     pgtype.UUID `json:"task_id"`
+	CategoryID pgtype.UUID `json:"category_id"`
+}
+
+func (q *Queries) AddTaskCategory(ctx context.Context, arg AddTaskCategoryParams) error {
+	_, err := q.db.Exec(ctx, addTaskCategory, arg.TaskID, arg.CategoryID)
+	return err
+}
+
+const createCategory = `-- name: CreateCategory :one
+INSERT INTO categories (name)
+VALUES ($1)
+RETURNING id, name, created_at
+`
+
+func (q *Queries) CreateCategory(ctx context.Context, name string) (Category, error) {
+	row := q.db.QueryRow(ctx, createCategory, name)
+	var i Category
+	err := row.Scan(&i.ID, &i.Name, &i.CreatedAt)
+	return i, err
+}
+
+const createTask = `-- name: CreateTask :one
+INSERT INTO tasks (user_id, name, status)
+VALUES ($1, $2, $3)
+RETURNING id, user_id, name, status, created_at, updated_at
+`
+
+type CreateTaskParams struct {
+	UserID pgtype.UUID `json:"user_id"`
+	Name   string      `json:"name"`
+	Status TaskStatus  `json:"status"`
+}
+
+func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
+	row := q.db.QueryRow(ctx, createTask, arg.UserID, arg.Name, arg.Status)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (name, email, password_hash)
+VALUES ($1, $2, $3)
+RETURNING id, name, email, password_hash, created_at, updated_at
+`
+
+type CreateUserParams struct {
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email, arg.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const findTaskById = `-- name: FindTaskById :one
 SELECT
     id, user_id, name, status, created_at, updated_at

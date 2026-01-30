@@ -11,6 +11,10 @@ import (
 )
 
 type Querier interface {
+	AddTaskCategory(ctx context.Context, arg AddTaskCategoryParams) error
+	CreateCategory(ctx context.Context, name string) (Category, error)
+	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	FindTaskById(ctx context.Context, id pgtype.UUID) (Task, error)
 	ListTasks(ctx context.Context) ([]Task, error)
 }
