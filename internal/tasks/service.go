@@ -2,22 +2,23 @@ package tasks
 
 import (
 	"context"
-	"github.com/gabrafo/todo_golang/internal/adapters/sqlc"
+	repo "github.com/gabrafo/todo_golang/internal/adapters/sqlc"
 )
 
 type Service interface {
-	ListTasks(ctx context.Context) ([]sqlc.Task, error)
+	ListTasks(ctx context.Context) ([]repo.Task, error)
 }
 
 type svc struct {
-
+	repo repo.Querier
 }
 
-func NewService() Service {
+func NewService(repo repo.Querier) Service {
 	return &svc {
+		repo: repo,
 	}
 }
 
-func (s *svc) ListTasks(ctx context.Context) ([]sqlc.Task, error) {
-	return nil, nil
+func (s *svc) ListTasks(ctx context.Context) ([]repo.Task, error) {
+	return s.repo.ListTasks(ctx)
 }

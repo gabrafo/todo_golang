@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	
-	"github.com/gabrafo/todo_golang/internal/tasks"
 
+	"github.com/gabrafo/todo_golang/internal/tasks"
+	repo "github.com/gabrafo/todo_golang/internal/adapters/sqlc"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httplog/v3"
@@ -29,7 +31,7 @@ func (api *api) mount() http.Handler { // mount returns an http.Handler, keeping
 	    w.Write([]byte("OK"))
 	})
 
-	tasksService := tasks.NewService()
+	tasksService := tasks.NewService(repo.New(api.db))
 	tasksHandler := tasks.NewHandler(tasksService)
 	r.Route("/tasks", func(r chi.Router) {
 		r.Get("/", tasksHandler.ListTasks)
@@ -75,6 +77,7 @@ func (api *api) run(ctx context.Context, h http.Handler) error {
 type api struct {
 	config config
 	logger *slog.Logger
+	db *pgx.Conn
 }
 
 type config struct {
