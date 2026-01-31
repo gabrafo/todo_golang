@@ -1,0 +1,15 @@
+# Air config for hot reload
+root = "."
+tmp_dir = "bin"
+
+[build]
+  bin = "./bin/main"
+  cmd = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/main ./cmd"
+  include_ext = ["go"]
+  exclude_dir = ["bin", "vendor"]
+
+[run]
+  cmd = "./bin/main"
+
+[log]
+  time = true
